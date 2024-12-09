@@ -118,33 +118,64 @@ INSERT INTO rate_res (user_id, res_id, amount, date_rate) VALUES
 
 
 -- Câu truy vấn 1: Tìm 5 người đã like nhà hàng nhiều nhất
-SELECT user_id, COUNT(*) AS total_likes
-FROM like_res
-GROUP BY user_id
-ORDER BY total_likes DESC
+
+SELECT 
+    u.user_id,
+    u.full_name,
+    u.email,
+    COUNT(lr.res_id) AS total_likes
+FROM 
+    user u
+JOIN 
+    like_res lr ON u.user_id = lr.user_id
+GROUP BY 
+    u.user_id, u.full_name, u.email
+ORDER BY 
+    total_likes DESC
 LIMIT 5;
 
+
 -- Câu truy vấn 2: Tìm 2 nhà hàng có lượt like nhiều nhất
-SELECT res_id, COUNT(*) AS total_likes
-FROM like_res
-GROUP BY res_id
-ORDER BY total_likes DESC
+SELECT 
+    r.res_id,
+    r.res_name,
+    r.image,
+    r.`desc`,
+    COUNT(lr.user_id) AS total_likes
+FROM 
+    restaurant r
+JOIN 
+    like_res lr ON r.res_id = lr.res_id
+GROUP BY 
+    r.res_id, r.res_name, r.image, r.`desc`
+ORDER BY 
+    total_likes DESC
 LIMIT 2;
 
 -- Câu truy vấn 3: Tìm người đã đặt hàng nhiều nhất
-SELECT user_id, COUNT(*) AS total_orders
-FROM `order`
-GROUP BY user_id
-ORDER BY total_orders DESC
+SELECT 
+    u.user_id,
+    u.full_name,
+    u.email,
+    SUM(o.amount) AS total_items_ordered
+FROM 
+    user u
+JOIN 
+    `order` o ON u.user_id = o.user_id
+GROUP BY 
+    u.user_id, u.full_name, u.email
+ORDER BY 
+    total_items_ordered DESC
 LIMIT 1;
 
 -- Câu truy vấn 4: Tìm người dùng không hoạt động trong hệ thống
-SELECT user_id, full_name
-FROM user
-WHERE user_id NOT IN (
-    SELECT DISTINCT user_id FROM `order`
-    UNION
-    SELECT DISTINCT user_id FROM like_res
-    UNION
-    SELECT DISTINCT user_id FROM rate_res
-);
+SELECT 
+    u.user_id,
+    u.full_name,
+    u.email
+FROM 
+    user u
+WHERE 
+    u.user_id NOT IN (SELECT DISTINCT user_id FROM `order`)
+    AND u.user_id NOT IN (SELECT DISTINCT user_id FROM like_res)
+    AND u.user_id NOT IN (SELECT DISTINCT user_id FROM rate_res);
